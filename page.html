@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>TP1-4</title>
+	<meta charset="utf-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+	<link rel="stylesheet" href="tools/normalize.css"/>
+	<style type="text/css">
+     * { text-align: center; }
+     .canva { width: 500px; height: 500px; border-width: 2px; border-style: solid; margin-left: auto; margin-right: auto;}
+     #stop:hover { font-variant: small-caps; cursor: pointer; }
+   </style>
+   <script type="text/javascript" src="tools.js"></script>
+</head>
+<body>
+   <div class="canva">
+		<canvas id="mon_canvas" width="500" height="500"> 
+  			Texte alternatif pour les navigateurs ne supportant pas Canvas.
+		</canvas>
+	</div>
+  <div id="stop_clic">Stop</div>
+</body>
+<script type="text/javascript">
+  // -------------------------------------------------------
+  // Méthodes de l'objet Grille  
+ 
+	function Grille(nbX, nbY, canvaID)
+	{
+		this.nbX = nbX;
+		this.nbY = nbY;
+		this.canvaID = canvaID;
+		
+		this.nbC=nbX*nbY;
+		this.dX="10px";
+		this.dY="10px";
+		this.ctx="2d";
+		this.obj= new Array(); 
+		
+		this.tab= new Array(this.nbX);
+	
+		for(var i=0; i<this.nbX; i++)
+   			this.tab[i] = new Array(this.nbY);
+
+		
+		for( var i=0; i < this.nbX ; i++){
+			for(var j=0; j<this.nbY;j++)
+				this.tab[i][j]=false;
+		}
+
+		this.nbCur=0;
+		
+		
+	}
+
+	Grille.prototype.ajoutObjet =  function (objet)
+	{
+		this.obj[this.nbCur++]=objet;
+		this.tab[objet.posX][objet.posY]=true;
+
+	}
+	
+	Grille.prototype.stopObjets = function ()
+	{
+		
+		for(var i=0; i<this.nbCur; i++)
+			this.obj[i].eveille=false;
+
+	}
+
+	Grille.prototype.dessin = function ()
+	{
+		
+		this.dessinGrille();
+		for (var i =0; i<this.nbCur;i++)
+			this.obj[i].dessinRobot(this.ctx,this.dX,this.dY);
+			
+	}
+
+	Grille.prototype.mvtAdmis = function(objet,dx,dy)
+	{
+		if(objet.posX+dx<0 || objet.posY+dy<0)
+			return false;
+		
+		if(objet.posX+dx>=this.nbX || objet.posY+dy>=this.nbY)
+			return false;
+
+		
+		
+		
+		
+		return true;
+
+	}
+
+	Grille.prototype.isFull =  function ()
+	{
+		
+	
+		for(var i =0;  i<this.nbX;i++)
+		{
+			for(var j=0;j<this.nbY;j++)
+			{
+				if(this.tab[i][j]==false) return false;			
+		
+			}
+
+		}
+		
+		return true;
+
+
+	}
+
+	Grille.prototype.majDessinObjet = function (objet,dx,dy)
+	{
+		
+		this.tab[objet.posX][objet.posY]=true;
+	
+		var canevas = document.getElementById("mon_canvas");
+		var ctx = canevas.getContext("2d");
+
+		ctx.beginPath();
+		
+		
+		ctx.clearRect(objet.xEff-this.dX/2, objet.yEff-this.dX/2, this.dY, this.dY);
+		
+		
+		
+		
+		objet.dessinRobot(this.ctx,this.dX,this.dY);
+	}
+
+	Grille.prototype.dessinGrille = function ()
+	{
+		canvas = document.getElementById("mon_canvas"); 
+		if (canvas.getContext)
+		{    
+		    context = canvas.getContext('2d'); 
+		}
+		 context.beginPath();
+		
+		var tailleW = canvas.width;
+		var tailleH = canvas.height;
+
+		
+		
+		var taille2=tailleH/this.nbY;
+		var taille=tailleW/this.nbX;
+		
+		
+		// Modification de la taille des cellules, utile dans dessinRobots
+		this.dX=taille;
+		this.dY=taille2;
+		
+		
+ 		
+		 for( var i = 0; i<this.nbX; i++)
+		 {	 //Desssin des colonnes
+			 context.moveTo(i*taille,tailleH);
+		 	 context.lineTo(i*taille,0);
+			 //Dessin des lignes
+ 			 context.moveTo(0,i*taille2);
+		 	 context.lineTo(tailleH,i*taille2);
+		 }
+		 context.stroke(); 	
+	}
+
+	
+
+	Grille.prototype.toString = function() // surcharge de la méthode toString
+	{
+		return '(' + this.nbX + ',' + this.nbY + ',' + this.canvaID + ',' + this.nbC+ ')';
+	}
+  // -------------------------------------------------------
+  // Méthodes de l'objet
+
+	function Robot(posX,posY,temps,couleur)
+	{
+		this.posX = posX;
+		this.posY = posY;
+		this.temps = temps;
+		this.couleur = couleur;
+		this.timeID = null;
+		this.eveille=true;
+
+		
+	}
+
+	Robot.prototype.dessinRobot = function (ctx, dX, dY)
+	{	
+		
+		  var canvas = document.getElementById("mon_canvas");
+		  if (canvas.getContext)
+		  {    
+		    context = canvas.getContext(ctx); 
+		  }
+		  context.beginPath();
+		  context.fillStyle=this.couleur;
+		  context.arc((this.posX*dX)+dX/2, (this.posY*dY)+dY/2, dY/2, 0, 2 * Math.PI);
+		  this.xEff=(this.posX*dX)+dX/2;
+		  this.yEff=(this.posY*dY)+dY/2;
+		  context.fill();	
+		context.stroke(); 
+	}
+
+	Robot.prototype.perception =function ()
+	{
+		console.log("je suis la");
+		if(gr.isFull()==false && this.eveille==true){
+		var tableau = new Array();
+		
+		if(gr.mvtAdmis(this,1,0)) tableau.push('D');
+		if(gr.mvtAdmis(this,-1,0)) tableau.push('G');
+		if(gr.mvtAdmis(this,0,1)) tableau.push('B');
+		if(gr.mvtAdmis(this,0,-1)) tableau.push('H');
+				
+		this.reflexion(tableau);
+		}
+	}
+
+	Robot.prototype.reflexion= function (tabMvt)
+	{
+		
+		var alea = getRandomInt(0,tabMvt.length-1);
+		
+		
+		this.action(tabMvt[alea]);
+	}
+	
+	Robot.prototype.action = function (act)
+	{
+		
+		switch (act){
+		case 'D':
+			this.posX++;
+			gr.majDessinObjet(this,1,0);
+			break;
+		
+		case 'G':
+			this.posX--;
+			gr.majDessinObjet(this,-1,0);
+			break;
+
+		case 'B':
+			this.posY++;
+			gr.majDessinObjet(this,0,1);
+			break;
+					
+
+		case 'H':
+			this.posY--;
+			gr.majDessinObjet(this,0,-1);
+			break;
+
+
+		}
+		var that=this;
+		setTimeout(function(){that.perception()},100);
+	}
+
+		function myStopFunction() {
+			
+    			clearInterval(myVar);
+			clearInterval(myVar2);
+			clearInterval(myVar3);
+		}
+		
+	function stopFonctionnement ()
+	{
+		myStopFunction();
+
+	}
+  // -------------------------------------------------------
+  // scène globale
+  var gr = new Grille(12,12,'mon_canvas');
+  
+
+	
+  var rbt1 = new Robot(4,4,0.1,'black');
+  var rbt2 = new Robot(11,11,0.03,'red');
+  var rbt3 = new Robot(5,10,0.05,'blue');
+
+  gr.ajoutObjet(rbt1);
+  gr.ajoutObjet(rbt2);
+  gr.ajoutObjet(rbt3);
+
+
+  gr.dessin();
+ 
+  var stop = document.getElementById("stop_clic");
+  
+  stop.addEventListener('click',stopFonctionnement); 
+  rbt1.perception();
+  rbt2.perception();
+  rbt3.perception();
+  
+
+
+
+
+  //rbt1.reveille();
+  //rbt2.reveille();
+  //rbt3.reveille();
+</script>
+</html>
